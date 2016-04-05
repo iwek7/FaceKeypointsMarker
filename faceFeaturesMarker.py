@@ -1,5 +1,4 @@
-import sys
-import numpy as np
+
 import matplotlib.pyplot as plt
 from pylab import *
 import csv
@@ -10,7 +9,7 @@ import PyQt4.QtGui as QtGui
 import PyQt4.QtCore as QtCore
 
 from imageDataLoader import imageDataLoader
-
+from GUIManager import GUIManager
 # used to embedding matplotlib image in qt app
 from matplotlib.backends.backend_qt4agg import (
     FigureCanvasQTAgg as FigureCanvas,
@@ -165,8 +164,6 @@ class faceFeaturesMarker(QtGui.QMainWindow):
         main_box.setLayout(main_layout)
 
         self.setCentralWidget(main_box)
-
-    
 
     def init_main_menu_layout(self, main_menu_layout):
         """ Initiates main menu layout. """
@@ -436,7 +433,7 @@ class faceFeaturesMarker(QtGui.QMainWindow):
                         else:
                             new_tuple = double(new_tuple)            
                         self.keypoints_data[int(row[0])][int(row[1])][self.KEYPOINT_NAMES[keypoint_index]] = new_tuple
-
+    
  
 if __name__ == '__main__':
     qApp = QtGui.QApplication(sys.argv)

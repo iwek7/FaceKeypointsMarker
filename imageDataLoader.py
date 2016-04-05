@@ -33,8 +33,7 @@ class imageDataLoader():
         orl_images_df = pd.DataFrame(columns=cols_names)
                                  
         for person in range(1, num_ppl + 1):
-            # z gory ustalamy co bedzie walidacyjne a co treningowe
-           
+          
             for img_idx in range(1, num_images + 1):
                 path = (self.catalog_location + file_name + str(person) + "/" + 
                     str(img_idx) + ".pgm"
