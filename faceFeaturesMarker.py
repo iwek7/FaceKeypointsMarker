@@ -1,13 +1,15 @@
 import sys
-import re
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from pylab import *
 import csv
 
+
+
 import PyQt4.QtGui as QtGui
 import PyQt4.QtCore as QtCore
+
+from imageDataLoader import imageDataLoader
 
 # used to embedding matplotlib image in qt app
 from matplotlib.backends.backend_qt4agg import (
@@ -113,7 +115,9 @@ class faceFeaturesMarker(QtGui.QMainWindow):
         self.fill_current_keypoint_boxes_with_cached_data()
         # load pictures data into memory
         # todo: move it to other class to other file and give it more generic implementation (getData or something) so that it could be used with diffrent datasets
-        self.orl_faces = self.load_orl_faces("C:/Users/Michal/Documents/magisterka/dane/orl_faces/")
+        self.data_loader = imageDataLoader("C:/Users/Michal/Documents/magisterka/dane/orl_faces/")
+        self.data_loader.load_data()
+
         # initialize all widgets in window
         self.init_widgets()   
         # plot face on canvas widget            
@@ -348,7 +352,7 @@ class faceFeaturesMarker(QtGui.QMainWindow):
     def plot_face(self):
         """ plot face and pool events and process them"""
         if 0 <= self.current_person * self.IMAGES_OF_PERSON + self.current_img < self.NUMER_OF_PEOPLE * self.IMAGES_OF_PERSON:
-            self.ax.imshow(self.orl_faces.iloc[self.current_person * self.IMAGES_OF_PERSON + self.current_img]['image'],  cmap='gray')
+            self.ax.imshow(self.data_loader.images_data_frame.iloc[self.current_person * self.IMAGES_OF_PERSON + self.current_img]['image'],  cmap='gray')
             
     def pool_plot_events(self):
         """ Waits for events happening on the plot and processes it accordingly. """
@@ -433,48 +437,7 @@ class faceFeaturesMarker(QtGui.QMainWindow):
                             new_tuple = double(new_tuple)            
                         self.keypoints_data[int(row[0])][int(row[1])][self.KEYPOINT_NAMES[keypoint_index]] = new_tuple
 
-    def read_pgm(self, filename, byteorder='>'):
-        """ reads pmg file. """
-        with open(filename, 'rb') as f:
-            buffer = f.read()
-        try:
-            header, width, height, maxval = re.search(
-                b"(^P5\s(?:\s*#.*[\r\n])*"
-                b"(\d+)\s(?:\s*#.*[\r\n])*"
-                b"(\d+)\s(?:\s*#.*[\r\n])*"
-                b"(\d+)\s(?:\s*#.*[\r\n]\s)*)", buffer).groups()
-        except AttributeError:
-            raise ValueError("Not a raw PGM file: '%s'" % filename)
-        return np.frombuffer(buffer,
-                                dtype='u1' if int(maxval) < 256 else byteorder+'u2',
-                                count=int(width)*int(height),
-                                offset=len(header)
-                                ).reshape((int(height), int(width)))
-
-    def load_orl_faces(self, catalog_loc, file_name = "s", num_ppl = 40, num_images = 10):
-        """ loads images dataset into panads dataframe """
-        cols_names =  ['person_id','image_id', 'image']                    
-        orl_images_df = pd.DataFrame(columns=cols_names)
-                                 
-        for person in range(1, num_ppl + 1):
-            # z gory ustalamy co bedzie walidacyjne a co treningowe
-           
-            for img_idx in range(1, num_images + 1):
-                path = (catalog_loc + file_name + str(person) + "/" + 
-                    str(img_idx) + ".pgm"
-                        )
-                # obrazki maja fromat 112x92, siec jest wytrenowana na 96x96
-                # tymczasowe trywialne rozwiazanie : ucinamy nadliczbowe pixele z pionu (po polowie gora i dol)
-                # dodajemy puste (0) paski z lewej i prawej (po 2 z kazdej strony o szerokosci pixela)
-                image = self.read_pgm(path)[8 : 112 - 8,]
-                image = np.insert(image,2,92 + np.zeros((2,image.shape[0])),1)
-                image = np.insert(image,image.shape[1], np.zeros((2,image.shape[0])),1)
-
-                orl_images_df= orl_images_df.append(pd.DataFrame(
-                                [[person, img_idx, image]], 
-                                columns=cols_names))          
-        return orl_images_df
-
+ 
 if __name__ == '__main__':
     qApp = QtGui.QApplication(sys.argv)
     MainWindow = faceFeaturesMarker()
