@@ -7,7 +7,8 @@ class imageDataLoader():
 
     def __init__(self, catalog_location):
         self.catalog_location = catalog_location 
-
+        # pixels
+        self.resolution = (96,96)
     
     def read_pgm(self, filename, byteorder='>'):
         """ reads pmg file. """

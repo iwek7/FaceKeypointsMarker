@@ -56,12 +56,7 @@ class faceFeaturesMarker(QtGui.QMainWindow):
     KEYPOINT_DATA_PRECISSION = 2
 
     # MOVE THIS SHIT TO OTHER CLASS ASAP
-    dpi = 72.
-    ypixels = 96 
-    xpixels = 96 
-    xinch = xpixels / dpi + 1
-    yinch = ypixels / dpi + 1
-
+    DPI = 72.
 
     def __init__(self, parent=None):   
         """Initialize GUI as well as load dataset and create cache data structures."""
@@ -116,6 +111,9 @@ class faceFeaturesMarker(QtGui.QMainWindow):
         # todo: move it to other class to other file and give it more generic implementation (getData or something) so that it could be used with diffrent datasets
         self.data_loader = imageDataLoader("C:/Users/Michal/Documents/magisterka/dane/orl_faces/")
         self.data_loader.load_data()
+
+        self.xinch = self.data_loader.resolution[0] / self.DPI + 1
+        self.yinch = self.data_loader.resolution[1] / self.DPI + 1
 
         # initialize all widgets in window
         self.init_widgets()   
@@ -294,7 +292,7 @@ class faceFeaturesMarker(QtGui.QMainWindow):
         if len(self.KEYPOINT_NAMES) > new_keypoint_index >= 0:
             self.change_keypoint_line_edit_active(self.current_keypoint, self.KEYPOINT_NAMES[new_keypoint_index])
             self.current_keypoint = self.KEYPOINT_NAMES[new_keypoint_index]
-              
+            self.refresh_plot() 
     def change_keypoint_line_edit_active(self, old_keypoint, new_keypoint):
         """ marks box of current keypoint as active and deactivates old one"""    
         """ for now just changes styleSheet """
@@ -344,7 +342,6 @@ class faceFeaturesMarker(QtGui.QMainWindow):
         # todo do we need to reactivate it every time image is changed?
         self.pool_plot_events() 
          
-
     #todo consider spliting into multiple functions with single responsibility
     def plot_face(self):
         """ plot face and pool events and process them"""
@@ -360,16 +357,22 @@ class faceFeaturesMarker(QtGui.QMainWindow):
         """ Adds scatter plot on top of face plot """
         for keypoint in self.KEYPOINT_NAMES:
             if self.keypoints_data[self.current_person][self.current_img][keypoint] != ():   
-                plt.scatter([self.keypoints_data[self.current_person][self.current_img][keypoint][0]],
-                    self.keypoints_data[self.current_person][self.current_img][keypoint][1])
+                if keypoint == self.current_keypoint:
+                    plt.scatter([self.keypoints_data[self.current_person][self.current_img][keypoint][0]],
+                        self.keypoints_data[self.current_person][self.current_img][keypoint][1], color='yellow')
+                else:
+                    plt.scatter([self.keypoints_data[self.current_person][self.current_img][keypoint][0]],
+                        self.keypoints_data[self.current_person][self.current_img][keypoint][1], color='blue')
        
+
+
     def process_plot_mouse_click(self, event):
         """ Processes mouse cli"""
         try:
             ix, iy = round(event.xdata, self.KEYPOINT_DATA_PRECISSION), round(event.ydata, self.KEYPOINT_DATA_PRECISSION)
         except TypeError:
             return
-        if ix < 0 or iy < 0 or ix > self.xpixels or iy > self.ypixels:
+        if ix < 0 or iy < 0 or ix > self.data_loader.resolution[0] or iy > self.data_loader.resolution[1]:
             return
         self.keypoints_line_edits[self.current_keypoint].setText(str(ix) + ";" + str(iy))
         self.keypoints_data[self.current_person][self.current_img][self.current_keypoint] = (ix,iy,)
