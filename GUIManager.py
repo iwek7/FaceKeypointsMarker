@@ -142,7 +142,7 @@ class GUIManager(object):
         main_menu_layout.addWidget(btn)
 
         # resets all keypoints on current image
-        btn = QtGui.QPushButton("RESET", self.parent)
+        btn = QtGui.QPushButton("RESET PICTURE KEYPOINTS", self.parent)
         btn.clicked.connect(self.parent.reset_all_current_img_keypoints)
         btn.resize(self.BUTTON_WIDTH, self.BUTTON_HEIGHT)
         main_menu_layout.addWidget(btn)
