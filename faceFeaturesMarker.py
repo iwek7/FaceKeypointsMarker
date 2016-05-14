@@ -16,6 +16,16 @@ from matplotlib.backends.backend_qt4agg import (
     NavigationToolbar2QT as NavigationToolbar)
 
 
+# class SavePopup(QtGui.QWidget):
+#     def __init__(self):
+#         QtGui.QWidget.__init__(self)
+
+    # def paintEvent(self, e):
+    #     dc = QPainter(self)
+    #     dc.drawLine(0, 0, 100, 100)
+    #     dc.drawLine(100, 0, 0, 100)
+
+
 class faceFeaturesMarker(QtGui.QMainWindow):
  
     # names of all keypoints
@@ -70,6 +80,9 @@ class faceFeaturesMarker(QtGui.QMainWindow):
         # those values are changes by buttons
         self.current_img = 0
         self.current_person = 0
+        # update labels accordingly
+        self.GUIManager.update_picture_label(self.current_img)
+        self.GUIManager.update_person_label(self.current_person)
 
         # currently active facial keypoint (active line edit to writing)
         self.current_keypoint = self.KEYPOINT_NAMES[0]
@@ -153,7 +166,9 @@ class faceFeaturesMarker(QtGui.QMainWindow):
             self.current_img = 0
             self.refresh_plot()
             self.fill_current_keypoint_boxes_with_cached_data()
-
+            # change label of person
+            self.GUIManager.update_person_label(self.current_person)
+            self.GUIManager.update_picture_label(self.current_img)
     def change_potted_img(self, move):
         """ changes currently potted image of the same person"""
         new_img = self.current_img + move
@@ -164,6 +179,8 @@ class faceFeaturesMarker(QtGui.QMainWindow):
             self.current_img = new_img 
             self.refresh_plot()
             self.fill_current_keypoint_boxes_with_cached_data()
+            # change label of image
+            self.GUIManager.update_picture_label(self.current_img)
 
     def fill_current_keypoint_boxes_with_cached_data(self):
         """Fills line edits of current image with data from keypoints_data"""
@@ -249,26 +266,37 @@ class faceFeaturesMarker(QtGui.QMainWindow):
         """ exports data from keypoints_data to csv 
             we have one row per image with all the data in columns
         """
-        with open(self.DATA_FILE_PATH, 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            
-            coor_names = ('X','Y')
-            keypoints_column_names = [keypoint + '_' + coor 
-                                for keypoint in self.KEYPOINT_NAMES 
-                                for coor in coor_names]
-            writer.writerow(['person','image'] + keypoints_column_names)                           
+        try:
+            with open(self.DATA_FILE_PATH, 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                
+                coor_names = ('X','Y')
+                keypoints_column_names = [keypoint + '_' + coor 
+                                    for keypoint in self.KEYPOINT_NAMES 
+                                    for coor in coor_names]
+                writer.writerow(['person','image'] + keypoints_column_names)                           
 
-            for person in range(self.NUMER_OF_PEOPLE):
-                for image in range(self.IMAGES_OF_PERSON):
-                    keypoints_list = list()
-                    for keypoint in self.KEYPOINT_NAMES:
-                        # if data is empty then export empty spaces else export actual coordinates
-                        if self.keypoints_data[person][image][keypoint] == ():
-                            keypoints_list += ['','']
-                        else:
-                            keypoints_list += [i for i in self.keypoints_data[person][image][keypoint]]
-                    writer.writerow([person,image] + keypoints_list)
+                for person in range(self.NUMER_OF_PEOPLE):
+                    for image in range(self.IMAGES_OF_PERSON):
+                        keypoints_list = list()
+                        for keypoint in self.KEYPOINT_NAMES:
+                            # if data is empty then export empty spaces else export actual coordinates
+                            if self.keypoints_data[person][image][keypoint] == ():
+                                keypoints_list += ['','']
+                            else:
+                                keypoints_list += [i for i in self.keypoints_data[person][image][keypoint]]
+                        writer.writerow([person,image] + keypoints_list)
+        
+            self.w = MyPopup()
+            self.w.setGeometry(100, 100, 400, 200)
+            self.w.show()
 
+        except Exception:
+            print("Exception occured while saving")
+            # self.w = MyPopup()
+            # self.w.setGeometry(100, 100, 400, 200)
+            # self.w.show()
+            pass
 
     def read_data_from_csv(self):
         """ read data from csv file (pointed by DATA_FILE_PATH)
@@ -286,11 +314,6 @@ class faceFeaturesMarker(QtGui.QMainWindow):
                         else:
                             new_tuple = double(new_tuple)            
                         self.keypoints_data[int(row[0])][int(row[1])][self.KEYPOINT_NAMES[keypoint_index]] = new_tuple
-        
-    
-
-
-
 
 if __name__ == '__main__':
     qApp = QtGui.QApplication(sys.argv)
